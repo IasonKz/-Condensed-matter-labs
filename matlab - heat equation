@@ -1,0 +1,84 @@
+rho=1.2;
+cp=50;
+
+%Length in thee three directions (i.e. width, depth and height)
+W=100;
+D=50;
+H=30;
+
+%Number of nodes in the three directions
+NW=101;
+ND=51;
+NH=31;
+
+%Distance between nodes in each of the three directions
+w=W/(NW-1);
+d=D/(ND-1);
+h=H/(NH-1);
+
+%Number of time steps and time interval
+Nt=18000;
+dt=1;
+Total_t=Nt*dt;
+
+%Creating matrix for the temperature
+Tn=zeros(NH,NW,ND);
+
+%Creating matrix for thermal conductivity
+K=10*ones(NH,NW,ND);
+
+K(:,1,:)=0.001;
+K(:,end,:)=0.001;
+
+K(1,:,:)=0.001;
+K(end,:,:)=0.001;
+
+K(:,:,1)=0.001;
+K(:,:,end)=0.001;
+
+%Initial conditions
+Tn(:,:,:)=0;
+t=0;
+[X,Y,Z] = ndgrid(1:NH,1:NW,1:ND);
+
+%March in time
+for k=1:Nt
+    k
+    %Update time
+    t=t+dt;
+
+      %Update the temperature
+      Tc=Tn;
+
+      %Calculating new temperature in x and y and z locations
+      for i=2:NW-1
+          for j=2:ND-1
+              for m=2:NH-1
+                  Tn(m,i,j)=Tc(m,i,j)+...
+                      dt*(K(m,i,j)/rho/cp)*...
+                      (((Tc(m+1,i,j)-2*Tc(m,i,j)+Tc(m-1,i,j))/h/h)+...
+                      ((Tc(m,i+1,j)-2*Tc(m,i,j)+Tc(m,i-1,j))/w/w)+...
+                      ((Tc(m,i,j+1)-2*Tc(m,i,j)+Tc(m,i,j-1))/d/d));
+              end
+          end
+      end
+       scatter3(X(:),Y(:),Z(:),1,Tn(:),'filled')
+       colorbar
+       title(sprintf('Time Step:%d',k))
+       drawnow
+      %Applying the source term
+      if (t<2*3600)
+          Tn(20,80,40)= Tn(20,80,40)+(dt*100000/rho/cp);
+      end
+
+      %Boundary condition
+      Tn(:,1,:)=Tn(:,2,:);
+      Tn(:,end,:)=Tn(:,end-1,:);
+
+      Tn(1,:,:)=Tn(2,:,:);
+      Tn(end,:,:)=Tn(end-1,:,:);
+
+      Tn(:,:,1)=Tn(:,:,2);
+      Tn(:,:,end)=Tn(:,:,end-1);
+
+end
